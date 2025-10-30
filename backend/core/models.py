@@ -4,6 +4,10 @@ from django.contrib.auth.base_user import BaseUserManager
 
 
 class UserManager(BaseUserManager):
+    def normalize_email(self, email):
+        """Normalize the entire email address to lowercase"""
+        return email.strip().lower() if email else None
+    
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError("Email must be set")
