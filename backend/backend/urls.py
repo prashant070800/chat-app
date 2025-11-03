@@ -1,13 +1,12 @@
 from django.contrib import admin
 from django.urls import path, include
 
-# --- Add these imports for Swagger ---
+# --- Imports for Swagger ---
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-# --- End of imports ---
 
-# --- Add this Schema View for Swagger ---
+# --- Schema View for Swagger ---
 schema_view = get_schema_view(
    openapi.Info(
       title="Your Project API",
@@ -25,15 +24,19 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # Add this line to include all your app's API URLs
-    # All URLs will be prefixed with 'api/'
-    # e.g., /api/signup/, /api/login/, /api/logout/
-    path('api/', include('core.urls')),
+    # --- YOUR API URLS ---
+    # This points to core/urls.py (the file you listed)
+    # Access via /api/signup/, /api/login/
+    path('api/', include('core.urls')), 
 
-    # --- Add these paths for Swagger UI and ReDoc ---
+    # --- YOUR NEW WEB APP URLS ---
+    # This points to core/web_urls.py
+    # Access via /login/, /logout/, /signup/, /
+    path('', include('core.web_urls')),
+
+    # --- Swagger URLs ---
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-    # --- End of Swagger paths ---
 ]
 
