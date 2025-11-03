@@ -38,8 +38,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "rest_framework",
-    "core",
+    
+    'rest_framework',
+    'rest_framework.authtoken', # For token authentication
+    'drf_yasg',                 # For Swagger UI
+    'core.apps.CoreConfig', 
 ]
 
 MIDDLEWARE = [
@@ -71,7 +74,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-
+# 3. DRF settings for Token Authentication
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        # Use TokenAuthentication as the primary method
+        'rest_framework.authentication.TokenAuthentication',
+        # SessionAuthentication is good to have for the browsable API
+        'rest_framework.authentication.SessionAuthentication', 
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        # By default, require users to be authenticated
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
