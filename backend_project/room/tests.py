@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from django.test import TestCase
 
-from backend.room.models import Room, RoomMember, RoomMemberStatus
+from room.models import Room, RoomMember, RoomMemberStatus
 
 User = get_user_model()
 
@@ -11,8 +11,8 @@ User = get_user_model()
 class RoomMemberTests(TestCase):
 
     def setUp(self):
-        self.user1 = User.objects.create_user(username="u1", password="pass")
-        self.user2 = User.objects.create_user(username="u2", password="pass")
+        self.user1 = User.objects.create_user(email="u1@gmail.com", password="pass")
+        self.user2 = User.objects.create_user(email="u2@gmail.com", password="pass")
 
         self.room = Room.objects.create(
             name="TestRoom",
