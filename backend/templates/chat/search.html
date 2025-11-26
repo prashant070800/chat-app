@@ -1,0 +1,42 @@
+{% extends "core/base.html" %}
+
+{% block title %}Find Friends{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Find Friends</h2>
+        <a href="{% url 'chat-friends' %}" class="text-indigo-600 hover:text-indigo-900">Back to Friends</a>
+    </div>
+
+    <form method="get" class="mb-8">
+        <div class="flex gap-4">
+            <input type="text" name="q" value="{{ query|default:'' }}" placeholder="Search by name or email..."
+                class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+            <button type="submit"
+                class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Search</button>
+        </div>
+    </form>
+
+    {% if query %}
+    <h3 class="text-lg font-medium text-gray-900 mb-4">Results for "{{ query }}"</h3>
+    {% if users %}
+    <ul class="divide-y divide-gray-200">
+        {% for u in users %}
+        <li class="py-4 flex justify-between items-center">
+            <div>
+                <p class="text-sm font-medium text-gray-900">{{ u.first_name }} {{ u.last_name }}</p>
+                <p class="text-sm text-gray-500">{{ u.email }}</p>
+            </div>
+            <div>
+                <a href="{% url 'chat-invite' u.id %}" class="text-indigo-600 hover:text-indigo-900">Add Friend</a>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-gray-500">No users found.</p>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

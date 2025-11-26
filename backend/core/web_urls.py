@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from .web_views import home_view, signup_view # Import the new view
 from .forms import EmailAuthenticationForm # Our custom form
@@ -19,6 +19,10 @@ urlpatterns = [
     ), name='web-logout'),
 
     # --- NEW SIGNUP URL ---
+    # --- NEW SIGNUP URL ---
     path('signup/', signup_view, name='web-signup'),
+    
+    # Chat Web URLs
+    path('chat/', include('chat.web_urls')),
 ]
 

@@ -1,0 +1,59 @@
+{% extends "core/base.html" %}
+
+{% block title %}My Friends{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">My Friends</h2>
+        <a href="{% url 'chat-search' %}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Find
+            Friends</a>
+    </div>
+
+    <!-- Pending Requests -->
+    {% if pending_requests %}
+    <div class="mb-8">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Pending Requests</h3>
+        <ul class="divide-y divide-gray-200">
+            {% for req in pending_requests %}
+            <li class="py-4 flex justify-between items-center">
+                <div>
+                    <p class="text-sm font-medium text-gray-900">{{ req.sender.first_name }} {{ req.sender.last_name }}
+                    </p>
+                    <p class="text-sm text-gray-500">{{ req.sender.email }}</p>
+                </div>
+                <div class="flex space-x-2">
+                    <a href="{% url 'chat-handle-request' req.id 'accept' %}"
+                        class="text-green-600 hover:text-green-900">Accept</a>
+                    <a href="{% url 'chat-handle-request' req.id 'reject' %}"
+                        class="text-red-600 hover:text-red-900">Reject</a>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Friends List -->
+    <div>
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Friends</h3>
+        {% if friends %}
+        <ul class="divide-y divide-gray-200">
+            {% for friend in friends %}
+            <li class="py-4 flex justify-between items-center">
+                <div>
+                    <p class="text-sm font-medium text-gray-900">{{ friend.first_name }} {{ friend.last_name }}</p>
+                    <p class="text-sm text-gray-500">{{ friend.email }}</p>
+                </div>
+                <div>
+                    <button class="bg-gray-100 text-gray-800 px-3 py-1 rounded-md hover:bg-gray-200">Chat</button>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-gray-500">You haven't added any friends yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

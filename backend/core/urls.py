@@ -18,4 +18,7 @@ urlpatterns = [
     
     # Logout URL (e.g., POST /api/logout/)
     path('logout/', UserLogoutView.as_view(), name='api-logout'),
+    
+    # Chat URLs
+    path('chat/', include('chat.urls')),
 ]
