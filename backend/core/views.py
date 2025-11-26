@@ -5,7 +5,7 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import User
-from .serializers import UserSerializer
+from .serializers import UserSerializer, CustomAuthTokenSerializer
 
 class UserSignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     """
@@ -50,6 +50,8 @@ class CustomAuthTokenLoginView(ObtainAuthToken):
     Returns a token on successful login.
     """
     permission_classes = [AllowAny] # Anyone can try to log in
+
+    serializer_class = CustomAuthTokenSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data,
