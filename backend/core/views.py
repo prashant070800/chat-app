@@ -31,7 +31,9 @@ class UserSignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         
         headers = self.get_success_headers(serializer.data)
         
-        return Response(
+        headers = self.get_success_headers(serializer.data)
+        
+        response = Response(
             {
                 'user': serializer.data,
                 'token': token.key
@@ -39,6 +41,16 @@ class UserSignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             status=status.HTTP_201_CREATED,
             headers=headers
         )
+        # Set HttpOnly cookie
+        response.set_cookie(
+            'auth_token',
+            token.key,
+            httponly=True,
+            samesite='Lax',
+            secure=False,  # Set to True in production
+            max_age=3600 * 24 * 7  # 1 week
+        )
+        return response
 
 class CustomAuthTokenLoginView(ObtainAuthToken):
     """
@@ -59,11 +71,21 @@ class CustomAuthTokenLoginView(ObtainAuthToken):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
-        return Response({
+        response = Response({
             'token': token.key,
             'user_id': user.pk,
             'email': user.email
         })
+        # Set HttpOnly cookie
+        response.set_cookie(
+            'auth_token',
+            token.key,
+            httponly=True,
+            samesite='Lax',
+            secure=False,  # Set to True in production
+            max_age=3600 * 24 * 7  # 1 week
+        )
+        return response
 
 class UserLogoutView(APIView):
     """
@@ -80,10 +102,12 @@ class UserLogoutView(APIView):
         try:
             # Delete the token to log the user out
             request.user.auth_token.delete()
-            return Response(
+            response = Response(
                 {"detail": "Successfully logged out."},
                 status=status.HTTP_200_OK
             )
+            response.delete_cookie('auth_token')
+            return response
         except Exception as e:
             return Response(
                 {"detail": "Error logging out: {}".format(str(e))},
