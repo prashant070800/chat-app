@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",  # For token authentication
     "drf_yasg",  # For Swagger UI
     "core.apps.CoreConfig",
+    "chat",
 ]
 
 MIDDLEWARE = [
@@ -79,7 +80,7 @@ WSGI_APPLICATION = "backend.wsgi.application"
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         # Use TokenAuthentication as the primary method
-        "rest_framework.authentication.TokenAuthentication",
+        "core.authentication.CookieTokenAuthentication",
         # SessionAuthentication is good to have for the browsable API
         "rest_framework.authentication.SessionAuthentication",
     ],
