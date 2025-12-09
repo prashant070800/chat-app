@@ -1,0 +1,152 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto mt-10 p-4">
+    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+        <!-- Header -->
+        <div class="bg-indigo-600 px-6 py-4">
+            <h2 class="text-xl font-bold text-white">Chat with {{ other_user.first_name }} {{ other_user.last_name }}
+            </h2>
+        </div>
+
+        <!-- Chat Box -->
+        <div id="chat-box" class="h-96 overflow-y-auto p-6 bg-gray-50 space-y-4">
+            <!-- Messages will be loaded here -->
+            <div class="text-center text-gray-500" id="loading-messages">Loading messages...</div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="bg-gray-100 px-6 py-4 border-t border-gray-200">
+            <form id="chat-form" class="flex space-x-4">
+                <input type="text" id="message-input"
+                    class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-4 py-2"
+                    placeholder="Type a message..." required>
+                <button type="submit"
+                    class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Send</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('Chat room loaded');
+        const otherUserId = "{{ other_user.id }}";
+        const currentUserId = "{{ request.user.id }}";
+        const chatBox = document.getElementById('chat-box');
+        const chatForm = document.getElementById('chat-form');
+        const messageInput = document.getElementById('message-input');
+        const loadingMessages = document.getElementById('loading-messages');
+        let lastMessageId = 0;
+
+        if (!chatForm) {
+            console.error('Chat form not found!');
+            return;
+        }
+
+        function formatTime(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function appendMessage(msg) {
+            // Compare as strings to avoid parseInt issues
+            const isMe = String(msg.sender.id) === String(currentUserId);
+            const alignClass = isMe ? 'justify-end' : 'justify-start';
+            const bgClass = isMe ? 'bg-indigo-600 text-white' : 'bg-white text-gray-800 border border-gray-200';
+            const roundedClass = isMe ? 'rounded-l-lg rounded-br-lg' : 'rounded-r-lg rounded-bl-lg';
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex ${alignClass}`;
+
+            msgDiv.innerHTML = `
+                <div class="max-w-[75%] px-4 py-2 shadow-sm ${bgClass} ${roundedClass}">
+                    <div class="text-sm">${msg.content}</div>
+                    <div class="text-xs mt-1 ${isMe ? 'text-indigo-200' : 'text-gray-400'} text-right">
+                        ${formatTime(msg.timestamp)}
+                    </div>
+                </div>
+            `;
+
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function loadMessages() {
+            if (!otherUserId) {
+                console.error('No other user ID found');
+                return;
+            }
+            try {
+                const response = await fetch(`/api/chat/messages/?user_id=${otherUserId}`);
+                if (!response.ok) throw new Error('Failed to load messages');
+
+                const messages = await response.json();
+                if (loadingMessages) loadingMessages.style.display = 'none';
+                chatBox.innerHTML = ''; // Clear loading or old messages
+
+                messages.forEach(msg => {
+                    appendMessage(msg);
+                    lastMessageId = Math.max(lastMessageId, msg.id);
+                });
+            } catch (error) {
+                console.error(error);
+                if (loadingMessages) loadingMessages.textContent = 'Error loading messages.';
+            }
+        }
+
+        async function sendMessage(e) {
+            e.preventDefault();
+            console.log('Sending message...');
+            const content = messageInput.value.trim();
+            if (!content) return;
+
+            try {
+                const response = await fetch('/api/chat/messages/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        receiver_id: otherUserId,
+                        content: content
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to send message');
+
+                const msg = await response.json();
+                appendMessage(msg);
+                messageInput.value = '';
+                lastMessageId = Math.max(lastMessageId, msg.id);
+                console.log('Message sent');
+            } catch (error) {
+                console.error(error);
+                alert('Failed to send message.');
+            }
+        }
+
+        chatForm.addEventListener('submit', sendMessage);
+        loadMessages();
+
+        // Simple polling for new messages every 5 seconds
+        setInterval(async () => {
+            if (!otherUserId) return;
+            try {
+                const response = await fetch(`/api/chat/messages/?user_id=${otherUserId}`);
+                if (response.ok) {
+                    const messages = await response.json();
+                    const newMessages = messages.filter(m => m.id > lastMessageId);
+                    newMessages.forEach(msg => {
+                        appendMessage(msg);
+                        lastMessageId = Math.max(lastMessageId, msg.id);
+                    });
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }, 5000);
+    });
+</script>
+{% endblock %}
