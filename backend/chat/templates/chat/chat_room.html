@@ -134,13 +134,18 @@
         setInterval(async () => {
             if (!otherUserId) return;
             try {
-                const response = await fetch(`/api/chat/messages/?user_id=${otherUserId}`);
+                // Use cursor to fetch only new messages
+                const response = await fetch(`/api/chat/messages/?user_id=${otherUserId}&after_id=${lastMessageId}`);
                 if (response.ok) {
                     const messages = await response.json();
-                    const newMessages = messages.filter(m => m.id > lastMessageId);
-                    newMessages.forEach(msg => {
-                        appendMessage(msg);
-                        lastMessageId = Math.max(lastMessageId, msg.id);
+                    // No need to filter client-side anymore, but keeping it safe won't hurt
+                    // actually, if we trust the API, we can just append
+                    messages.forEach(msg => {
+                        // Ensure we don't add duplicates if API returns old ones for some reason
+                        if (msg.id > lastMessageId) {
+                            appendMessage(msg);
+                            lastMessageId = Math.max(lastMessageId, msg.id);
+                        }
                     });
                 }
             } catch (error) {

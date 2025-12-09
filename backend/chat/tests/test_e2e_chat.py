@@ -66,3 +66,15 @@ class ChatE2ETest(TestCase):
         # Check if the Chat link is present and has the correct URL
         expected_url = f'/chat/room/{self.user_b.id}/'
         self.assertContains(response, f'href="{expected_url}"')
+
+    def test_list_messages_with_cursor(self):
+        # Create 3 messages
+        Message.objects.create(sender=self.user_a, receiver=self.user_b, content="Msg 1")
+        msg2 = Message.objects.create(sender=self.user_a, receiver=self.user_b, content="Msg 2")
+        Message.objects.create(sender=self.user_a, receiver=self.user_b, content="Msg 3")
+        
+        # Fetch messages after msg2
+        response = self.client_b.get(f'/api/chat/messages/?user_id={self.user_a.id}&after_id={msg2.id}')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['content'], "Msg 3")
