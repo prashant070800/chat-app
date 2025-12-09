@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.contrib import messages
-from .models import Friendship
+from .models import Friendship, Message
 
 User = get_user_model()
 
@@ -76,3 +76,15 @@ def handle_request_view(request, friendship_id, action):
         messages.info(request, "Friend request rejected.")
         
     return redirect('chat-friends')
+
+@login_required
+def chat_room_view(request, user_id):
+    other_user = get_object_or_404(User, id=user_id)
+    
+    # Mark messages as read
+    Message.objects.filter(sender=other_user, receiver=request.user, is_read=False).update(is_read=True)
+    
+    context = {
+        'other_user': other_user,
+    }
+    return render(request, 'chat/chat_room.html', context)

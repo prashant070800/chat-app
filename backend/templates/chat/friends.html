@@ -46,7 +46,8 @@
                     <p class="text-sm text-gray-500">{{ friend.email }}</p>
                 </div>
                 <div>
-                    <button class="bg-gray-100 text-gray-800 px-3 py-1 rounded-md hover:bg-gray-200">Chat</button>
+                    <a href="{% url 'chat-room' friend.id %}"
+                        class="bg-indigo-600 text-white px-3 py-1 rounded-md hover:bg-indigo-700">Chat</a>
                 </div>
             </li>
             {% endfor %}
