@@ -19,8 +19,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(sender=self.request.user)
 
-    @decorators.action(detail=False, methods=['get'])
-    def list_messages(self, request):
+    def list(self, request, *args, **kwargs):
         user = request.user
         other_user_id = request.query_params.get('user_id')
         
@@ -30,7 +29,17 @@ class MessageViewSet(viewsets.ModelViewSet):
         messages = Message.objects.filter(
             (Q(sender=user) & Q(receiver_id=other_user_id)) |
             (Q(receiver=user) & Q(sender_id=other_user_id))
-        ).order_by('timestamp')
+        )
+        
+        after_id = request.query_params.get('after_id')
+        if after_id:
+            try:
+                after_id = int(after_id)
+                messages = messages.filter(id__gt=after_id)
+            except ValueError:
+                pass # Ignore invalid after_id
+            
+        messages = messages.order_by('timestamp')
         
         serializer = self.get_serializer(messages, many=True)
         return Response(serializer.data)
