@@ -72,18 +72,16 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        async function loadMessages() {
-            if (!otherUserId) {
-                console.error('No other user ID found');
-                return;
-            }
+        // Initial load of messages via API (still useful for history)
+        async function loadHistory() {
+            if (!otherUserId) return;
             try {
                 const response = await fetch(`/api/chat/messages/?user_id=${otherUserId}`);
                 if (!response.ok) throw new Error('Failed to load messages');
 
                 const messages = await response.json();
                 if (loadingMessages) loadingMessages.style.display = 'none';
-                chatBox.innerHTML = ''; // Clear loading or old messages
+                chatBox.innerHTML = '';
 
                 messages.forEach(msg => {
                     appendMessage(msg);
@@ -95,63 +93,40 @@
             }
         }
 
-        async function sendMessage(e) {
+        loadHistory();
+
+        // WebSocket Connection
+        const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const chatSocket = new WebSocket(
+            wsScheme + '://' + window.location.host + '/ws/chat/' + otherUserId + '/'
+        );
+
+        chatSocket.onmessage = function (e) {
+            const data = JSON.parse(e.data);
+            const message = data.message;
+            // Only append if it's new (though WS should only send new ones)
+            if (message.id > lastMessageId) {
+                appendMessage(message);
+                lastMessageId = Math.max(lastMessageId, message.id);
+            }
+        };
+
+        chatSocket.onclose = function (e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        chatForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            console.log('Sending message...');
             const content = messageInput.value.trim();
             if (!content) return;
 
-            try {
-                const response = await fetch('/api/chat/messages/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: JSON.stringify({
-                        receiver_id: otherUserId,
-                        content: content
-                    })
-                });
+            // Send via WebSocket
+            chatSocket.send(JSON.stringify({
+                'message': content
+            }));
 
-                if (!response.ok) throw new Error('Failed to send message');
-
-                const msg = await response.json();
-                appendMessage(msg);
-                messageInput.value = '';
-                lastMessageId = Math.max(lastMessageId, msg.id);
-                console.log('Message sent');
-            } catch (error) {
-                console.error(error);
-                alert('Failed to send message.');
-            }
-        }
-
-        chatForm.addEventListener('submit', sendMessage);
-        loadMessages();
-
-        // Simple polling for new messages every 5 seconds
-        setInterval(async () => {
-            if (!otherUserId) return;
-            try {
-                // Use cursor to fetch only new messages
-                const response = await fetch(`/api/chat/messages/?user_id=${otherUserId}&after_id=${lastMessageId}`);
-                if (response.ok) {
-                    const messages = await response.json();
-                    // No need to filter client-side anymore, but keeping it safe won't hurt
-                    // actually, if we trust the API, we can just append
-                    messages.forEach(msg => {
-                        // Ensure we don't add duplicates if API returns old ones for some reason
-                        if (msg.id > lastMessageId) {
-                            appendMessage(msg);
-                            lastMessageId = Math.max(lastMessageId, msg.id);
-                        }
-                    });
-                }
-            } catch (error) {
-                console.error(error);
-            }
-        }, 5000);
+            messageInput.value = '';
+        });
     });
 </script>
 {% endblock %}
