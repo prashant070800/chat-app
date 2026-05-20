@@ -28,6 +28,7 @@ class User(AbstractUser):
     username = None  # remove the username field
 
     email = models.EmailField(null = False,unique=True,)
+    metadata = models.JSONField(default=dict, blank=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
